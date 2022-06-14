@@ -59,7 +59,6 @@ const setInitialFormState: AppSettings = async(jiraProjectId: number | string) =
     // Copy the values from the first one onto a new key.
     settings = initialFormState[Object.keys(settings)[0]];
   }
-  console.log('settings[pkey]', settings[pkey]);
   return settings;
 }
 
