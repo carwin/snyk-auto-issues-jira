@@ -53,14 +53,11 @@ const initialFormState: AppSettings = {
 const setInitialFormState: AppSettings = async(jiraProjectId: number | string) => {
   const pkey = jiraProjectId.toString();
   let settings: AppSettings | undefined = await storage.get(`${pkey}`); // @TODO.
-  console.log('settings +!+!+!+! ', settings)
   if (typeof(settings) === 'undefined' || settings.length === 0) {
     // Initial form state object can't possibly know about all the Jira projects
     // since we're in this condition, we know this one isn't there.
     // Copy the values from the first one onto a new key.
     settings = initialFormState[Object.keys(settings)[0]];
-    // Add a new key
-    // settings[pkey] = settings[Object.keys(settings)[0]];
   }
   console.log('settings[pkey]', settings[pkey]);
   return settings;
@@ -98,7 +95,7 @@ const Config = () => {
     await storage.set(`${currentProjectId.toString()}`, formData);
     await console.log("Here's what we have in storage when we end submit: ", await storage.get(currentProjectId))
     console.log('--------------------------------------------------------------------------------')
-    // await storage.set(`appSettings[${currentProjectId.toString()}]`, formData);
+    await storage.set(currentProjectId, formData);
     setFormState(formData);
   };
 
