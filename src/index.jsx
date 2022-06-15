@@ -1,145 +1,3 @@
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-const fakeProject = {
-  "project": {
-  "name": "snyk/goof",
-  "id": "af137b96-6966-46c1-826b-2e79ac49bbd9",
-  "created": "2018-10-29T09:50:54.014Z",
-  "origin": "github",
-  "type": "maven",
-  "readOnly": false,
-  "testFrequency": "daily",
-  "totalDependencies": 42,
-  "issueCountsBySeverity": {
-    "low": 13,
-    "medium": 8,
-    "high": 4,
-    "critical": 5
-  },
-  "imageId": "sha256:caf27325b298a6730837023a8a342699c8b7b388b8d878966b064a1320043019",
-  "imageTag": "latest",
-  "imageBaseImage": "alpine:3",
-  "imagePlatform": "linux/arm64",
-  "imageCluster": "Production",
-  "hostname": null,
-  "remoteRepoUrl": "https://github.com/snyk/goof.git",
-  "lastTestedDate": "2019-02-05T08:54:07.704Z",
-  "browseUrl": "https://app.snyk.io/org/4a18d42f-0706-4ad0-b127-24078731fbed/project/af137b96-6966-46c1-826b-2e79ac49bbd9",
-  "importingUser": {
-    "id": "e713cf94-bb02-4ea0-89d9-613cce0caed2",
-    "name": "example-user@snyk.io",
-    "username": "exampleUser",
-    "email": "example-user@snyk.io"
-  },
-  "isMonitored": false,
-  "branch": null,
-  "tags": [
-    {
-      "key": "example-tag-key",
-      "value": "example-tag-value"
-    }
-  ],
-  "attributes": {
-    "criticality": [
-      "high"
-    ],
-    "environment": [
-      "backend"
-    ],
-    "lifecycle": [
-      "development"
-    ]
-  },
-  "remediation": {
-    "upgrade": {},
-    "patch": {},
-    "pin": {}
-  }
-}
-}
-
-const fakeIssue = {
-  "id": "npm:ms:20170412",
-  "issueType": "vuln",
-  "pkgName": "ms",
-  "pkgVersions": [
-    "1.0.0"
-  ],
-  "issueData": {
-    "id": "npm:ms:20170412",
-    "title": "Regular Expression Denial of Service (ReDoS)",
-    "severity": "low",
-    "url": "https://snyk.io/vuln/npm:ms:20170412",
-    "description": "Lorem ipsum",
-    "identifiers": {
-      "CVE": [],
-      "CWE": [
-        "CWE-400"
-      ],
-      "ALTERNATIVE": [
-        "SNYK-JS-MS-10509"
-      ]
-    },
-    "credit": [
-      "Snyk Security Research Team"
-    ],
-    "exploitMaturity": "no-known-exploit",
-    "semver": {
-      "vulnerable": [
-        ">=0.7.1 <2.0.0"
-      ]
-    },
-    "publicationTime": "2017-05-15T06:02:45Z",
-    "disclosureTime": "2017-04-11T21:00:00Z",
-    "CVSSv3": "CVSS:3.0/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:L",
-    "cvssScore": 3.7,
-    "language": "js",
-    "patches": [
-      {
-        "id": "patch:npm:ms:20170412:2",
-        "urls": [
-          "https://snyk-patches.s3.amazonaws.com/npm/ms/20170412/ms_071.patch"
-        ],
-        "version": "=0.7.1",
-        "comments": [],
-        "modificationTime": "2019-12-03T11:40:45.866206Z"
-      }
-    ],
-    "nearestFixedInVersion": "2.0.0"
-  },
-  "isPatched": false,
-  "isIgnored": false,
-  "fixInfo": {
-    "isUpgradable": false,
-    "isPinnable": false,
-    "isPatchable": true,
-    "nearestFixedInVersion": "2.0.0"
-  },
-  "priority": {
-    "score": 399,
-    "factors": [
-      {
-        "name": "isFixable",
-        "description": "Has a fix available"
-      },
-      {
-        "name": "cvssScore",
-        "description": "CVSS 3.7"
-      }
-    ]
-  }
-}
-
-const fakeResponse = {
-  "project": fakeProject,
-  "newIssues": [
-    fakeIssue,
-  ]
-}
-
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 import ForgeUI, {
   render,
   Fragment,
@@ -244,52 +102,29 @@ export const processSnykHookData = async(req) => {
       // @TODO: See config.jsx - We call the first array key intentionally to
       //        prevent the creation of Jira issues in multiple Jira projects.
       const matchingJiraProjectId = mappedAppConfig[0] ? mappedAppConfig[0].key : false;
-      console.log('mapped', mappedAppConfig);
       const newIssueType = mappedAppConfig[0] ? mappedAppConfig[0].value.issueType : false;
       const severityConditions = mappedAppConfig[0] ? mappedAppConfig[0].value.severityLevels : false;
-      console.log('newIssueType: ', newIssueType);
-      console.log('severity conditions to create on...: ', severityConditions);
-
-      console.log('')
-      console.log('Confirming this project has a Jira project mapping before proceeding...');
-      console.log('Mapping status: ', jiraMappingExists);
-      console.log('Jira ID: ', matchingJiraProjectId);
-      // console.log('appConfigs: ', appConfigs[0].value.mappedSnykProjects);
-      console.log('')
 
       // We'll stop here if there is no mapped Jira project for this event's Snyk project
-      // if (typeof mappedAppConfig === 'undefined' || mappedAppConfig.length <= 0) {
-      //   console.log('This Snyk project has not been configured within the app settings. Aborting.');
-      //   // return false;
-      // }
+      if (typeof mappedAppConfig === 'undefined' || mappedAppConfig.length <= 0) {
+        console.log('This Snyk project has not been configured within the app settings. Aborting.');
+        return false;
+      }
 
       // ***********
       // * Step 3  * - Prepare an array of objects representing new Jira Issues
       // ***********
 
-      // !!!!!!!
-      // @TODO: testing only
-      newIssueCount = 1;
-      // !!!!!!!
-
+      // Instantiate a new array to collect/arrange the data.
       const newIssueData = [];
 
+      // Operate only when newIssueCount isn't 0.
       if (newIssueCount > 0) {
         for(let i = 0; i < newIssueCount; i++) {
           // const issueData = body.newIssues[i].issueData; // @TODO TEST - Uncomment it.
           const issueData = fakeResponse.newIssues[i].issueData;
-
-          console.log('');
-          console.log('this issue id: ', issueData.id);
-          console.log('Is the issue\'s severity in the settings list?: ', severityConditions.includes(issueData.severity))
-          console.log('');
-
           const exists = await issueExistsInJira({snykIssueId: issueData.id});
           const existingIssueIdent = await issueExistsInJira({snykIssueId: issueData.id, returnIssueIfTrue: true});
-
-          // const exists = await issueExistsInJira('snyk');
-          console.log('find out if it exists already...', exists);
-          console.log('If it does exist, here are the identifiers: ', existingIssueIdent);
 
           if (!exists) {
             newIssueData.push({snykProject: snykProjectName,
@@ -304,27 +139,19 @@ export const processSnykHookData = async(req) => {
           }
       }
 
-      console.log('Okay, new issues have been cleaned up a bit and put into a new array: ', newIssueData);
-
-
       // ***********
       // * Step 4  * - Create new issues in Jira
       // ***********
 
-      console.log('%%%%%%%%%!!!!!!!!%%%%%%%%%%')
       console.log('length of new issue data: ', newIssueData.length);
       if (newIssueData.length > 0) {
         // Here we go...
-        console.log('Here we go');
         newIssueData.map(issue => {
           const preparedIssue = prepareNewIssue(issue);
           console.log('preparedIssue: ', preparedIssue);
           createJiraIssue({data: preparedIssue});
-            // .then(response => console.log(`Created a new issue in Jira.`))
-            // .catch(err => console.log(`There was an error using createJiraIssue(): ${err}`));
         });
       }
-      console.log('%%%%%%%%%!!!!!!!!%%%%%%%%%%')
 
       return {
         body: "Success: Jira issues created for updated Snyk Project \n",
@@ -345,36 +172,7 @@ export const processSnykHookData = async(req) => {
   }
 }
 
-// Gets the current Jira instance
-// This is primarily useful for creating and searching for issues.
-//  - @see: https://community.developer.atlassian.com/t/how-to-retrieve-the-actual-jira-instance-i-am-in/43935/6
-export const getJiraEnvironmentId = async () => {
-  let result;
-  // NOTE/KLUDGE: We have no proper approach for Confluence so far, but can currently rely on a Confluence instance always having a
-  // corresponding Jira instance, hence using the respective Jira pproach only for starters:
-  //const hostProduct = getHostProduct();
-  const hostProduct = "jira";
-  if (hostProduct === "jira") {
-    result = await api
-      .asApp()
-      .requestJira("/rest/api/3/serverInfo");
-    const serverInfo = await result.json();
-    result = serverInfo.id;
-  }
-  console.log(`Jira instance base: ${result}`);
-
-  return result;
-}
-
-// Iterate the issues response object(s):
-// - create a corresponding Jira issue if there is no existing Jira issue
-//   and the issue is in response.newIssues
-// - remove a Jira issue if the issue is in response.removedIssues
-// - Do nothing if the issue is in the issues list, but not in new issues
-//   AND an existing Jira issue already exists.
-const processResponseIssues = () => {};
-
-// Return an object with issue key and ID if there's already a Jira Issue opened
+// Returns an object with issue key and ID if there's already a Jira Issue opened
 // for a given Snyk issue.
 //
 // For now, we'll use Jira issue labels to keep track of our issues.
@@ -400,11 +198,11 @@ const issueExistsInJira = async({snykIssueId, returnIssueIfTrue = false} : {stri
   }
 
   return false;
-
-  // const searchResult = await findJiraIssue(snykIssueId);
-  // return searchResult;
 };
 
+// Search for a Jira issue
+//
+// Takes a single string argument representing JQL text.
 const findJiraIssue = async(query) => {
   const context = useProductContext();
 
@@ -422,9 +220,6 @@ const findJiraIssue = async(query) => {
      console.log(`Response: ${res.status} ${res.statusText}`)
      return res.json();
   })
-  // .then(text => {
-  //   return text
-  // })
   .catch(err => console.error(err));
 
   return response;
@@ -487,7 +282,7 @@ const prepareNewIssue = ({snykProject, snykIssueId, snykIssueTitle, snykDescript
 }
 
 const createJiraIssue = async({data} : {any}) => {
-  console.log('createJiraIssue called. Here inside that function, we\'re about to create an issue.');
+  console.log('createJiraIssue() called. Creating issue...');
   const context = useProductContext();
   const response = await api
         .asApp()
@@ -501,28 +296,9 @@ const createJiraIssue = async({data} : {any}) => {
   });
   console.log(`Response: ${response.status} ${response.statusText}`);
   const result = await response.json();
-  console.log('Result: ', result);
 
   return result;
-
-  // const response = api.asApp().requestJira(
-  //   headers: {
-  //     'Accept': 'application/json',
-  //     'Content-Type': 'application/json'
-  //   },
-  //   body: JSON.stringify(data)
-  // })
-  //                     .then(createIssueRes => {
-  //                       return createIssueRes.json();
-  //                     })
-  //                     .catch(err => console.error(`createJiraIssue's API query encountered an error: ${err}`));
-  // const output = await response;
-  // return output;
 }
-
-
-//   return data;
-// };
 
 // Helper function
 export const getDataFromJira = async url => {
@@ -536,18 +312,18 @@ export const getDataFromJira = async url => {
   }
 };
 
-const App = () => {
+// const App = () => {
+//   useState(getEnvironmentBaseUrl);
+//   return (
+//     <Fragment>
+//       <Text>This is where App config should go</Text>
+//     </Fragment>
+//   );
+// };
 
-  useState(getEnvironmentBaseUrl);
-  return (
-    <Fragment>
-      <Text>This is where App config should go</Text>
-    </Fragment>
-  );
-};
-
-export const run = render(
-  <ProjectSettingsPage>
-    <App />
-  </ProjectSettingsPage>
-);
+// // Entry point.
+// export const run = render(
+//   <ProjectSettingsPage>
+//     <App />
+//   </ProjectSettingsPage>
+// );
