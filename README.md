@@ -1,37 +1,13 @@
-# Forge Hello World
+# Snyk Auto-Jira
 
-This project contains a Forge app written in Javascript that displays `Hello World!` in a Jira issue panel. 
+This project contains a Forge app written in Javascript that automatically opens Jira issues for issues discovered during Snyk scans.
+
+Users may configure the application on a per-project basis in their Jira environment.
 
 See [developer.atlassian.com/platform/forge/](https://developer.atlassian.com/platform/forge) for documentation and tutorials explaining Forge.
 
-## Requirements
+## Usage Requirements
 
-See [Set up Forge](https://developer.atlassian.com/platform/forge/set-up-forge/) for instructions to get set up.
-
-## Quick start
-
-- Modify your app by editing the `src/index.jsx` file.
-
-- Build and deploy your app by running:
-```
-forge deploy
-```
-
-- Install your app in an Atlassian site by running:
-```
-forge install
-```
-
-- Develop your app by running `forge tunnel` to proxy invocations locally:
-```
-forge tunnel
-```
-
-### Notes
-- Use the `forge deploy` command when you want to persist code changes.
-- Use the `forge install` command when you want to install the app on a new site.
-- Once the app is installed on a site, the site picks up the new app changes you deploy without needing to rerun the install command.
-
-## Support
-
-See [Get help](https://developer.atlassian.com/platform/forge/get-help/) for how to get help and provide feedback.
+- You'll need a Jira cloud environment and permissions to install.
+- Configure the app from a project settings page in Jira.
+- Use the app-provided callback to set up a Snyk webhook.
