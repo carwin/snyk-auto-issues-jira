@@ -1,9 +1,4 @@
 modules:
-  trigger:
-    - key: issue-created-event
-      function: main
-      events:
-        - avi:jira:created:issue
   webtrigger:
     - key: snyk-webtrigger
       function: snyk-poc-app-sync-func
@@ -14,8 +9,6 @@ modules:
   function:
     - key: snyk-poc-app-sync-func
       handler: index.processSnykHookData
-    - key: main
-      handler: index.run
     - key: config
       handler: config.run
 app:
