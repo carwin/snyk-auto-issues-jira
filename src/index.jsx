@@ -140,12 +140,6 @@ const fakeResponse = {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-
-// appConfig outline
-//   {"autoCloseExternallyResolved":"yes","severityLevels":["critical","low","medium","high"]}
 import ForgeUI, {
   render,
   Fragment,
@@ -187,10 +181,6 @@ export const processSnykHookData = async(req) => {
   // We'll need to loop through the storage data to find the appropriate Jira project to use
   // when we open a new issue. Unfortunately, the Storage API only allows queries to target
   // the `key`, so this could get a little ugly...
-  // @TODO: Maybe create a different version of the storageData for matching a snykProjectID to a jiraProjectId
-  //        Maybe something like a dict?
-  //        We want to avoid loop hell, it really stinks.
-
   const storageData = await storage.query().getMany();
 
 
@@ -211,7 +201,6 @@ export const processSnykHookData = async(req) => {
     const dependencyCount = body.project.totalDependencies;
     const issueCountCritical = body.project.issueCountsBySeverity.critical;
     const eventType = req.headers['x-snyk-event'];
-    const existingIssues = body;
 
     console.log(`Snyk webhook incoming...`);
     await console.log(`This one's event type is: ${eventType}.`);
@@ -255,6 +244,11 @@ export const processSnykHookData = async(req) => {
       // @TODO: See config.jsx - We call the first array key intentionally to
       //        prevent the creation of Jira issues in multiple Jira projects.
       const matchingJiraProjectId = mappedAppConfig[0] ? mappedAppConfig[0].key : false;
+      console.log('mapped', mappedAppConfig);
+      const newIssueType = mappedAppConfig[0] ? mappedAppConfig[0].value.issueType : false;
+      const severityConditions = mappedAppConfig[0] ? mappedAppConfig[0].value.severityLevels : false;
+      console.log('newIssueType: ', newIssueType);
+      console.log('severity conditions to create on...: ', severityConditions);
 
       console.log('')
       console.log('Confirming this project has a Jira project mapping before proceeding...');
@@ -264,88 +258,76 @@ export const processSnykHookData = async(req) => {
       console.log('')
 
       // We'll stop here if there is no mapped Jira project for this event's Snyk project
-      if (typeof mappedAppConfig === 'undefined' || mappedAppConfig.length <= 0) {
-        console.log('This Snyk project has not been configured within the app settings. Aborting.');
-        return false;
-      }
+      // if (typeof mappedAppConfig === 'undefined' || mappedAppConfig.length <= 0) {
+      //   console.log('This Snyk project has not been configured within the app settings. Aborting.');
+      //   // return false;
+      // }
 
       // ***********
       // * Step 3  * - Prepare an array of objects representing new Jira Issues
       // ***********
+
       // !!!!!!!
-      // testing only
+      // @TODO: testing only
       newIssueCount = 1;
       // !!!!!!!
 
       const newIssueData = [];
 
-      // if (newIssueCount.length > 0) {
+      if (newIssueCount > 0) {
         for(let i = 0; i < newIssueCount; i++) {
-          // const issueData = body.newIssues[i].issueData; @TODO TEST - Uncomment it.
+          // const issueData = body.newIssues[i].issueData; // @TODO TEST - Uncomment it.
           const issueData = fakeResponse.newIssues[i].issueData;
 
           console.log('');
           console.log('this issue id: ', issueData.id);
+          console.log('Is the issue\'s severity in the settings list?: ', severityConditions.includes(issueData.severity))
           console.log('');
 
-          const exists = await issueExistsInJira(issueData.id);
+          const exists = await issueExistsInJira({snykIssueId: issueData.id});
+          const existingIssueIdent = await issueExistsInJira({snykIssueId: issueData.id, returnIssueIfTrue: true});
+
           // const exists = await issueExistsInJira('snyk');
-          console.log('find out if it exists already...', exists.key !== 'undefined');
+          console.log('find out if it exists already...', exists);
+          console.log('If it does exist, here are the identifiers: ', existingIssueIdent);
 
-          // newIssueData.push({snykProject: snykProjectName,
-          //                    snykIssueId: issueData.id,
-          //                    snykIssueTitle: issueData.title,
-          //                    snykDescription: issueData.body,
-          //                    snykSeverity: issueData.severity,
-          //                    snykUrl: issueData.url,
-          //                    jiraProjectId: matchingJiraProjectId,
-          //                    jiraIssueTypeId: '10001'}); // @TODO: Create an option for this on the settings page.
+          if (!exists) {
+            newIssueData.push({snykProject: snykProjectName,
+                               snykIssueId: issueData.id,
+                               snykIssueTitle: issueData.title,
+                               snykDescription: issueData.description,
+                               snykSeverity: issueData.severity,
+                               snykUrl: issueData.url,
+                               jiraProjectId: matchingJiraProjectId,
+                               jiraIssueTypeId: newIssueType}); // @TODO: Create an option for this on the settings page.
+            }
+          }
+      }
 
-        }
-      // }
-
-      console.log('Okay, new issues have been cleaned up a bit and put into a new array, prePreparedIssueData: ', newIssueData);
+      console.log('Okay, new issues have been cleaned up a bit and put into a new array: ', newIssueData);
 
 
-      // let match = false;
-      // storageData.results.map((jiraProject, index, array) => {
-      //   const data = jiraProject.value;
-      //   const jiraProjectId = jiraProject.key;
+      // ***********
+      // * Step 4  * - Create new issues in Jira
+      // ***********
 
-      //   console.log(`Examining storage item ${index}...`);
-      //   // console.log(`Here's what it contains:`);
-      //   // console.log(jiraProject);
-
-      //   if (typeof(data.mappedSnykProjects) !== 'undefined' && data.mappedSnykProjects.includes(snykProjectId)) {
-      //     console.log('YES! We can put this project\'s issues into a Jira project!');
-      //     console.log('The Snyk Project ID: ', snykProjectId);
-      //     console.log('The Jira Project ID: ', jiraProjectId);
-      //   }
-      // });
-
-      // for(let i = 0; i < newIssueCount; i++) {
-      //   const issueData = body.newIssues[i].issueData;
-      //   let newlyPreparedIssue = await prepareNewIssue({snykProject: snykProjectName,
-      //                                                   snykIssueId: issueData.id,
-      //                                                   snykIssueTitle: issueData.title,
-      //                                                   snykDescription: issueData.body,
-      //                                                   snykSeverity: issueData.severity,
-      //                                                   snykUrl: issueData.url})
-      //   await console.log("~-~-~-~-~-~-~-~~-~-~-~-~-~-~-~~-~-~-~-~-~-~-~~-~-~-~-~-~-~-~");
-      //   await console.log("Here is a newly prepared issue.", newlyPreparedIssue);
-      //   await console.log("~-~-~-~-~-~-~-~~-~-~-~-~-~-~-~~-~-~-~-~-~-~-~~-~-~-~-~-~-~-~");
-      // }
-
-      // const newlyPreparedIssue = await prepareNewIssue();
-
-      // const storageData = await storage.query()
-      //                              .where('key', startsWith('1'))
-      //                              .limit(10)
-      //                              .getMany();
-
+      console.log('%%%%%%%%%!!!!!!!!%%%%%%%%%%')
+      console.log('length of new issue data: ', newIssueData.length);
+      if (newIssueData.length > 0) {
+        // Here we go...
+        console.log('Here we go');
+        newIssueData.map(issue => {
+          const preparedIssue = prepareNewIssue(issue);
+          console.log('preparedIssue: ', preparedIssue);
+          createJiraIssue({data: preparedIssue});
+            // .then(response => console.log(`Created a new issue in Jira.`))
+            // .catch(err => console.log(`There was an error using createJiraIssue(): ${err}`));
+        });
+      }
+      console.log('%%%%%%%%%!!!!!!!!%%%%%%%%%%')
 
       return {
-        body: "Success: Snyk Project updated\n",
+        body: "Success: Jira issues created for updated Snyk Project \n",
         headers: { "Content-Type": ["application/json"] },
         statusCode: 200,
         statusText: "OK",
@@ -397,15 +379,28 @@ const processResponseIssues = () => {};
 //
 // For now, we'll use Jira issue labels to keep track of our issues.
 // This is very not ideal.
-const issueExistsInJira = async(snykIssueId) => {
+const issueExistsInJira = async({snykIssueId, returnIssueIfTrue = false} : {string, boolean}) => {
   // Construct the label to look up.
   // The format comes from prepareNewIssue().
-  //
+
   const issueLabel = `snykId-${snykIssueId}`;
   // @TODO: Uncomment this after tests.
   const searchResult = await findJiraIssue(issueLabel);
 
-  return searchResult.issues.length > 0 ? { key: searchResult.issues[0].key, id: searchResult.issues[0].id } : false;
+  console.log(`Here is the search result ${searchResult}`);
+
+  if (typeof searchResult.issues !== 'undefined' && searchResult.issues.length > 0) {
+    if (returnIssueIfTrue === true) {
+      return {
+        key: await searchResult.issues[0].key,
+        id: await searchResult.issues[0].id
+      }
+    }
+    return true;
+  }
+
+  return false;
+
   // const searchResult = await findJiraIssue(snykIssueId);
   // return searchResult;
 };
@@ -416,47 +411,46 @@ const findJiraIssue = async(query) => {
   const encodedQuery = encodeURIComponent(query);
   console.log('Encoded Query: ', encodedQuery);
   const response = await api.asApp().requestJira(route`/rest/api/3/search?jql=labels%20%3D%20${query}`, {
-  // const response = api.asApp().requestJira(route`/rest/api/3/issue/picker?query=${query}`, {
+  // bonst response = api.asApp().requestJira(route`/rest/api/3/issue/picker?query=${query}`, {
     method: "GET",
     headers: {
       'Accept': 'application/json',
       'Content-Type': 'application/json'
     },
   })
-     .then(res => {
-       console.log(`Response: ${res.status} ${res.statusText}`)
-       return res.json();
-     })
-     .then(text => console.log(text))
-     .catch(err => console.error(err));
+  .then(res => {
+     console.log(`Response: ${res.status} ${res.statusText}`)
+     return res.json();
+  })
+  // .then(text => {
+  //   return text
+  // })
+  .catch(err => console.error(err));
+
+  return response;
 }
 
 // To match the existing Jira integration, all we really need is:
 //  1. issue.issueData.title
 //  2. issue.issueData.url
 //  3. issue.issueData.description
-// @TODO: We need to programmatically get the issue Type we'll be creating.
-// @TODO: Add issue Type option to app settings.
-//
-const prepareNewIssue = async({snykProject, snykIssueId, snykIssueTitle, snykDescription, snykSeverity, snykUrl, jiraProjectId, jiraIssueTypeId} : {string, string, string, string, string, string, string, number}) => {
-
-  const context = useProductContext();
-  // @TODO Update with value from storage when settings update is complete.
-  jiraIssueTypeId = '10001';
+const prepareNewIssue = ({snykProject, snykIssueId, snykIssueTitle, snykDescription, snykSeverity, snykUrl, jiraProjectId, jiraIssueTypeId} : {string, string, string, string, string, string, string, number}) => {
 
   console.log('==========================================');
-  console.log('Preparing a new Jira issue from Snyk data...');
+  console.log(`Preparing a new Jira issue from Snyk data...`);
   console.log(`snykProject - ${snykProject}`);
   console.log(`snykIssueId - ${snykIssueId}`);
   console.log(`snykIssueTitle - ${snykIssueTitle}`);
   console.log(`snykDescription - ${snykDescription}`);
   console.log(`snykSeverity - ${snykSeverity}`);
   console.log(`snykUrl - ${snykUrl}`);
+  console.log(`jiraProjectId - ${jiraProjectId}`);
+  console.log(`jiraIssueType - ${jiraIssueTypeId}`);
   console.log('==========================================');
 
 
   // Body data needs to return a _string_ of JSON.
-  const bodyData : JiraIssue = {
+  const bodyData = {
     update: {},
     fields: {
       summary: snykIssueTitle,
@@ -474,7 +468,7 @@ const prepareNewIssue = async({snykProject, snykIssueId, snykIssueTitle, snykDes
             type: 'paragraph',
             content: [
               {
-                'text': snykIssueDescription + '\n' + snykUrl,
+                'text': snykDescription + '\n' + snykUrl,
                 'type': 'text'
               }
             ]
@@ -492,23 +486,40 @@ const prepareNewIssue = async({snykProject, snykIssueId, snykIssueTitle, snykDes
   return bodyData;
 }
 
-//   const response = api.asApp().requestJira(route`/rest/api/3/issue/`, {
-//     method: "POST",
-//     headers: {
-//       'Accept': 'application/json',
-//       'Content-Type': 'application/json'
-//     },
-//     body: JSON.stringify(bodyData)
-//   })
-//      .then(res => {
-//        console.log(`Response: ${res.status} ${res.statusText}`)
-//        return res.json();
-//      })
-//      .then(text => console.log(text))
-//      .catch(err => console.error(err));
+const createJiraIssue = async({data} : {any}) => {
+  console.log('createJiraIssue called. Here inside that function, we\'re about to create an issue.');
+  const context = useProductContext();
+  const response = await api
+        .asApp()
+        .requestJira(route`/rest/api/3/issue/`, {
+    method: "POST",
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  });
+  console.log(`Response: ${response.status} ${response.statusText}`);
+  const result = await response.json();
+  console.log('Result: ', result);
 
+  return result;
 
-//   const data = await response;
+  // const response = api.asApp().requestJira(
+  //   headers: {
+  //     'Accept': 'application/json',
+  //     'Content-Type': 'application/json'
+  //   },
+  //   body: JSON.stringify(data)
+  // })
+  //                     .then(createIssueRes => {
+  //                       return createIssueRes.json();
+  //                     })
+  //                     .catch(err => console.error(`createJiraIssue's API query encountered an error: ${err}`));
+  // const output = await response;
+  // return output;
+}
+
 
 //   return data;
 // };

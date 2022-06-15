@@ -47,9 +47,37 @@ const initialFormState: AppSettings = {
   '10000': {
     severityLevels: ['critical', 'high'],
     autoCloseExternallyResolved: 'no',
-    mappedSnykProjects: []
+    mappedSnykProjects: [],
+    issueType: '',
   }
 };
+
+const getProjectIssueTypes = async() => {
+  const response = await api
+        .asApp()
+        .requestJira(route`/rest/api/3/issuetype`);
+  const result = await response.json();
+  const optionComponents = await projectIssueTypesToFormOptions(result);
+  return optionComponents;
+}
+
+const projectIssueTypesToFormOptions = (rawTypes) => {
+  const context = useProductContext();
+  console.log(`Got ${rawTypes.length} raw types`);
+  const options = [];
+
+  if (rawTypes.length > 0) {
+    rawTypes.map(type => {
+      if (type.scope.project.id === context.platformContext.projectId) {
+        type.subtask !== true ? options.push(<Option label={type.name} value={type.id} __auxId={`Option.${type.id}`} />) : false;
+        // type.subtask !== true ? options.push(<Option label={type.name} value={type.id} defaultSelected={optionSelectOnLoad(type.id)} />) : false;
+        // type.subtask !== true ? options.push({name: type.name, value: type.id}) : false;
+      }
+    })
+  }
+  console.log('options', options);
+  return options;
+}
 
 // setInitialFormState()
 //
@@ -98,8 +126,13 @@ const Config = () => {
     //     jiraProject: context.platformContext.projectId
     //   });
     // });
+    console.log('formData on submit... ', formData);
+    console.log('formState on submit...', formState);
+
     const mappedSnykProjectsArray: string[] = [];
-    formData.mappedSnykProjects = formData.mappedSnykProjects.split(',').map(item => item.trim());
+    if (typeof formData.mappedSnykProjects !== 'undefined' && formData.mappedSnykProjects.includes(',')) {
+      formData.mappedSnykProjects = formData.mappedSnykProjects.split(',').map(item => item.trim());
+    }
 
     console.log('--------------------------------------------------------------------------------')
     await console.log("Here's what we have in storage when we begin submit: ", await storage.get(currentProjectId))
@@ -137,10 +170,17 @@ const Config = () => {
     <Button text="Snyk Webhook Info" onClick={() => setSnykWebhookInfo(true)} />
   ]
 
+  const [issueTypeOptions] = useState(async() => await getProjectIssueTypes());
+  // const [issueTypeOptions] = useState(projectIssueTypesToFormOptions(getProjectIssueTypes()));
+
+  console.log('issuetypeoptions', issueTypeOptions);
+
+
   // This extrapolates some of the repetitive code that decides whether or not checkboxes
   // should be filled when the form loads. The idea is that the settings should persist.
   const boxCheckedOnLoad = (value) => formState.severityLevels && formState.severityLevels.includes(value) && true;
   const radioPressOnLoad = (value) => formState.autoCloseExternallyResolved === value && true;
+  const optionSelectOnLoad = (value) => formState.issueType === value && true;
 
   // This is the final return for the Config object.
   return (
@@ -192,6 +232,13 @@ const Config = () => {
           <Checkbox value="medium" label="Medium" defaultChecked={boxCheckedOnLoad('medium')} />
           <Checkbox value="low" label="Low" defaultChecked={boxCheckedOnLoad('low')} />
         </CheckboxGroup>
+
+        <Select isRequired="true" label="Issue type for automated issue creation" name="issueType">
+          {issueTypeOptions.map((type) => {
+            type.props.defaultSelected = optionSelectOnLoad(type.props.value)
+            return type
+          })}
+        </Select>
         <Heading size="medium">Automatic Issue Resolution</Heading>
         <Text>When a previously reported Snyk issue has been resolved, the Snyk POC Jira App can automatically close the corresponding issue it created in Jira.</Text>
         <RadioGroup isRequired="true"
