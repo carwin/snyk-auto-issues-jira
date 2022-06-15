@@ -1,3 +1,13 @@
+// @TODO: List is below
+//
+// 1. Prevent users from adding the same SNYK project to multiple JIRA projects
+//    - Inform users that only one mapping can exist.
+//    - Validate the content of that field on form submit.
+//    - Show an error of some kind, explaining the problem.
+// 2. Validate that submitted SNYK project IDs are valid UUIDs.
+//    - Validate the content of that field on form submit.
+//    - Show an error of some kind, explaining the problem.
+//
 import ForgeUI, {
   render,
   useState,
@@ -88,6 +98,8 @@ const Config = () => {
     //     jiraProject: context.platformContext.projectId
     //   });
     // });
+    const mappedSnykProjectsArray: string[] = [];
+    formData.mappedSnykProjects = formData.mappedSnykProjects.split(',').map(item => item.trim());
 
     console.log('--------------------------------------------------------------------------------')
     await console.log("Here's what we have in storage when we begin submit: ", await storage.get(currentProjectId))

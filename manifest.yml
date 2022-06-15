@@ -24,7 +24,7 @@ permissions:
   external:
     fetch:
       backend:
-        - "snykbd-poc.atlassian.net"
+        - snykbd-poc.atlassian.net
         - "*.snyk.io"
   scopes:
     - storage:app
