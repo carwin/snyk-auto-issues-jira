@@ -76,12 +76,15 @@ const projectIssueTypesToFormOptions = (rawTypes) => {
 //
 const setInitialFormState: AppSettings = async(jiraProjectId: number | string) => {
   const pkey = jiraProjectId.toString();
-  let settings: AppSettings | undefined = await storage.get(`${pkey}`); // @TODO.
-  if (typeof(settings) === 'undefined' || settings.length === 0) {
+  let settings = await storage.get(`${pkey}`); // @TODO.
+  if (typeof settings === 'undefined' || settings.length === 0) {
     // Initial form state object can't possibly know about all the Jira projects
     // since we're in this condition, we know this one isn't there.
     // Copy the values from the first one onto a new key.
-    settings = initialFormState[Object.keys(settings)[0]];
+    // settings = initialFormState[Object.keys(settings)[0]];
+    await storage.set(pkey, initialFormState);
+    settings = await storage.get(`${pkey}`); // @TODO.
+    // settings = initialFormState[pkey];
   }
   return settings;
 }
