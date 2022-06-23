@@ -1,14 +1,14 @@
 modules:
   webtrigger:
     - key: snyk-webtrigger
-      function: snyk-poc-app-sync-func
+      function: snyk-auto-issue-handler
   jira:projectSettingsPage:
     - key: snyk-jira-project-settings
       function: config
-      title: Snyk POC Settings
+      title: Snyk Auto-Issues for Jira
   function:
-    - key: snyk-poc-app-sync-func
-      handler: index.processSnykHookData
+    - key: snyk-auto-issue-handler
+      handler: issueCreate.processSnykHookData
     - key: config
       handler: config.run
 app:
