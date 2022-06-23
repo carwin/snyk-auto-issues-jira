@@ -24,8 +24,6 @@ import ForgeUI, {
   ModalDialog,
   Option,
   ProjectSettingsPage,
-  RadioGroup,
-  Radio,
   SectionMessage,
   Select,
   Strong,
@@ -39,14 +37,12 @@ import api, {storage, route, webTrigger} from '@forge/api';
 interface AppSettings {
   [jiraId: string]: {
     severityLevels: string[],
-    autoCloseExternallyResolved: 'yes' | 'no'
   }
 }
 
 const initialFormState: AppSettings = {
   '10000': {
     severityLevels: ['critical', 'high'],
-    autoCloseExternallyResolved: 'no',
     mappedSnykProjects: [],
     issueType: '',
   }
@@ -179,7 +175,6 @@ const Config = () => {
   // This extrapolates some of the repetitive code that decides whether or not checkboxes
   // should be filled when the form loads. The idea is that the settings should persist.
   const boxCheckedOnLoad = (value) => formState.severityLevels && formState.severityLevels.includes(value) && true;
-  const radioPressOnLoad = (value) => formState.autoCloseExternallyResolved === value && true;
   const optionSelectOnLoad = (value) => formState.issueType === value && true;
 
   // This is the final return for the Config object.
@@ -239,17 +234,7 @@ const Config = () => {
             return type
           })}
         </Select>
-        <Heading size="medium">Automatic Issue Resolution</Heading>
-        <Text>When a previously reported Snyk issue has been resolved, the Snyk POC Jira App can automatically close the corresponding issue it created in Jira.</Text>
-        <RadioGroup isRequired="true"
-                    label="Close Jira issues when Snyk reports the issue resolved?"
-                    name="autoCloseExternallyResolved"
-                    value="close">
-          <Radio label="Do not automatically close Jira issues" value="no" defaultChecked={radioPressOnLoad('no')} />
-          <Radio label="Automatically close externally remediated Jira issues" value="yes" defaultChecked={radioPressOnLoad('yes')} />
-        </RadioGroup>
       </Form>
-      {formState && <Code text={JSON.stringify(formState, null, 2)} language="json" />}
       {snykWebhookInfoVisible && (
         <ModalDialog header="Connecting to Snyk" onClose={() => setSnykWebhookInfo(false)}>
           <Text>Reference the information on this page When registering this App as a Webhook consumer with Snyk.</Text>
