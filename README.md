@@ -1,6 +1,6 @@
-# Snyk Auto-Jira
+# Snyk Auto-Issues for Jira
 
-This project contains a Forge app written in Javascript that automatically opens Jira issues for issues discovered during Snyk scans.
+This project contains a Forge app written in Javascript that automatically opens Jira issues for issues discovered during Snyk SCA scans.
 
 Users may configure the application on a per-project basis in their Jira environment.
 
