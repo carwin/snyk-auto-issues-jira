@@ -1,13 +1,3 @@
-// @TODO: List is below
-//
-// 1. Prevent users from adding the same SNYK project to multiple JIRA projects
-//    - Inform users that only one mapping can exist.
-//    - Validate the content of that field on form submit.
-//    - Show an error of some kind, explaining the problem.
-// 2. Validate that submitted SNYK project IDs are valid UUIDs.
-//    - Validate the content of that field on form submit.
-//    - Show an error of some kind, explaining the problem.
-//
 import ForgeUI, {
   render,
   useState,
@@ -112,16 +102,10 @@ const Config = () => {
 
   // The onSubmit handler
   const onConfigSubmit = async(formData) => {
-    // @deprecated
-    // It seems like a good idea to store the Snyk Project IDs in an object with
-    // the current project ID. It may make later lookups easier.
-    // const mappedSnykProjectsArr = [];
-    // const mappedSnykProjects = formData.mappedSnykProjects.split(',').map(item => {
-    //   mappedSnykProjectsArr.push({
-    //     snykProject: item.trim(),
-    //     jiraProject: context.platformContext.projectId
-    //   });
-    // });
+  // @TODO: List is below
+  // Validate that submitted SNYK project IDs are valid UUIDs.
+  // - Validate the content of that field on form submit.
+  // - Show an error of some kind, explaining the problem.
     console.log('formData on submit... ', formData);
     console.log('formState on submit...', formState);
 
@@ -158,19 +142,10 @@ const Config = () => {
   --header 'Content-Type: application/json' \\
   --data-raw '{
       "url": "${trigger}",
-      "secret": "<YOUR-CUSTOM-STRING>"
+      "secret": "<YOUR-CUSTOM-TEXT>"
   }'`;
 
-  // An array of button elements that appear near the Form's submit button.
-  const actionButtons = [
-    <Button text="Snyk Webhook Info" onClick={() => setSnykWebhookInfo(true)} />
-  ]
-
   const [issueTypeOptions] = useState(async() => await getProjectIssueTypes());
-  // const [issueTypeOptions] = useState(projectIssueTypesToFormOptions(getProjectIssueTypes()));
-
-  console.log('issuetypeoptions', issueTypeOptions);
-
 
   // This extrapolates some of the repetitive code that decides whether or not checkboxes
   // should be filled when the form loads. The idea is that the settings should persist.
@@ -182,37 +157,46 @@ const Config = () => {
     <Fragment>
       <Heading size="large">About</Heading>
       <Text>
-        The Snyk POC Jira Application subscribes to a Snyk organization's project scan results, automatically creating
-        Jira issues for <Strong>newly reported</Strong> vulnerabilities.</Text>
-      <SectionMessage>
-        <Text>
-        <Em>It is important to note that this application watches <Strong>all</Strong> the projects within a given Snyk
-        Organization. For users that wish to limit issues created for this Jira project to a particular <Strong>project</Strong> within
-        Snyk, we recommend <Link href="https://docs.snyk.io/features/user-and-group-management/managing-groups-and-organizations/manage-snyk-organizations">creating a new Snyk Organization</Link>
-         to house it.</Em>
-        </Text>
-      </SectionMessage>
+        The Snyk Auto-Issues for Jira application subscribes to a Snyk organization's project scan results, automatically creating
+        Jira issues for <Strong>newly reported</Strong> vulnerabilities. Use the form below to configure the operation of this
+        Jira application.</Text>
       <Heading size="medium">Before you begin</Heading>
       <Text>
-        This Jira Application functions by consuming a Webhook from <Link href="https://snyk.io">Snyk</Link>.
-        Webhooks require both a provider and a consumer to work properly. In the context of Webhooks, this Jira App
-        acts as the <Em>consumer</Em>. To complete the configuration, Snyk must be informed that there is a new
-        consumer to which Webhook events should be sent.
+        This Jira application functions by consuming a webhook from <Link href="https://snyk.io">Snyk</Link>.
+        Webhooks require both a provider and a consumer to work properly. In the context of webhooks, this Jira application
+        acts as the <Em>consumer</Em>. To complete the configuration, a Snyk webhook must be created which points to this
+        application as the consumer to which scan results should be sent.
+      </Text>
+      <SectionMessage>
+        <Text>
+          <Strong>Note:</Strong> The features necessary for this application to function are available only to Paid and Enterprise Snyk customers.
+        </Text>
+        <Text>
+          <Link href="https://app.snyk.io/login">Sign up for a new Snyk account</Link>
+        </Text>
+      </SectionMessage>
+
+      <Text>
+        Creating a new Snyk webhook is a relatively simple process. Review the official Snyk documentation,
+        <Strong><Link href="https://docs.snyk.io/integrations/snyk-webhooks#snyk-webhooks-for-snyk-api"> here</Link></Strong>, for
+        a complete overview.
       </Text>
       <Text>
-        Informing Snyk (the provider) about the new consumer is a relatively simple process. You can review the
-        official Snyk documentation <Strong><Link href="https://docs.snyk.io/integrations/snyk-webhooks#snyk-webhooks-for-snyk-api">here</Link></Strong>.
+        The necessary information about this consumer can be found by clicking the <Em>Snyk Webhook Info</Em> button below.
+        The resulting modal window contains this application's callback URL as well as an example cURL request which can be used
+        to quickly get up and running.
       </Text>
-      <Text>
-        The necessary information about this consumer can be found by clicking the <Em>Snyk Webhook Info</Em> button at the
-        bottom of this page. The resulting modal window also contains an example cURL request you can use, but be sure to
-        replace the sample values with your desired Snyk Organization ID and your API Token.
-      </Text>
+      <Button text="Snyk Webhook Info" onClick={() => setSnykWebhookInfo(true)} />
+
       <Heading size="large">Configuration</Heading>
-      <Heading size="medium">Automatic Issue Creation</Heading>
-      <Text>Which Snyk Projects are relevant to this Jira Project?</Text>
-      <Text>If you wish to create Jira issues for more than one Snyk project in this Jira project, separate Snyk Project IDs using a comma <Code text="," language="bash" />.</Text>
-      <Form onSubmit={onConfigSubmit} actionButtons={actionButtons}>
+      <Form onSubmit={onConfigSubmit}>
+
+        <Heading size="medium">Snyk Project Settings</Heading>
+        <Text>Insert the unique project ID of the Snyk project(s) to be monitored.</Text>
+        <Text>
+          Information on locating a project's unique ID may be found: <Strong><Link href="https://docs.snyk.io/introducing-snyk/introduction-to-snyk-projects/view-project-settings">here</Link></Strong>.
+          If you wish to create Jira issues for more than one Snyk project, separate the unique Snyk project IDs using a comma <Code text="," language="bash" />.
+        </Text>
         <TextArea placeholder="af137b96-6966-46c1-826b-2e79ac49bbd9"
                   defaultValue={typeof(formState.mappedSnykProjects) !== 'undefined' && formState.mappedSnykProjects}
                   isRequired="true"
@@ -220,14 +204,23 @@ const Config = () => {
                   name="mappedSnykProjects"
                   label="Snyk Project ID(s)"
                   description="Insert at least one Snyk Project ID from within your Snyk Organization. Newly discovered issues on that project will be created on this board." />
+
+        <Heading size="medium">Severity Level Options</Heading>
+        <Text>
+          The options below provide a mechanism for limiting the automated Jira issue creation by severity.
+        </Text>
         <CheckboxGroup name="severityLevels"
-                       label="For which Snyk severity levels should Jira issues be created?">
+                       label="Select the severity levels for which Jira issues will be created.">
           <Checkbox value="critical" label="Critical" defaultChecked={boxCheckedOnLoad('critical')} />
           <Checkbox value="high" label="High" defaultChecked={boxCheckedOnLoad('high')} />
           <Checkbox value="medium" label="Medium" defaultChecked={boxCheckedOnLoad('medium')} />
           <Checkbox value="low" label="Low" defaultChecked={boxCheckedOnLoad('low')} />
         </CheckboxGroup>
 
+        <Heading size="medium">Jira Issue Settings</Heading>
+        <Text>
+          New issues can be created as one of the issue types defined in this Jira project. Select the issue type below.
+        </Text>
         <Select isRequired="true" label="Issue type for automated issue creation" name="issueType">
           {issueTypeOptions.map((type) => {
             type.props.defaultSelected = optionSelectOnLoad(type.props.value)
@@ -237,11 +230,15 @@ const Config = () => {
       </Form>
       {snykWebhookInfoVisible && (
         <ModalDialog header="Connecting to Snyk" onClose={() => setSnykWebhookInfo(false)}>
-          <Text>Reference the information on this page When registering this App as a Webhook consumer with Snyk.</Text>
+          <Text>Reference the information on this page when creating a Snyk webhook.</Text>
           <Heading size="small">Snyk Webhook Callback URL</Heading>
-          <Text>Use this URL when registering the webhook with Snyk.</Text>
+          <Text>The URL below is unique to this Jira project.</Text>
           <Code text={trigger.toString()} language="rust" />
           <Heading size="small">Registering a webhook with cURL</Heading>
+          <Text>
+            For convenience, this cURL request should take care of configuring a webhook for this application. <Strong>Be sure to
+            replace the sample values with your desired Snyk Organization ID and your API Token</Strong>.
+          </Text>
           <Code text={snykWebhookRegistrationCommand} language="bash" />
         </ModalDialog>
       )}
@@ -258,26 +255,3 @@ export const run = render(
     <Config/>
   </ProjectSettingsPage>
 );
-
-
-// ================================================================================
-// Potentially useful things no longer in use...
-// ================================================================================
-//
-// in one iteration I was calling storage.get for this nested
-// object pretty often, but there may not be a need for it now.
-//
-// @TODO: This could just as easily take an argument containing the storage object
-//        to avoid calling for it again if we already have it.
-// const getSeverityLevelsFromStorage: string[] = async(projectId) => {
-//   const settings = typeof(await storage.get(projectId) !== 'undefined')
-//         ? await storage.get(projectId)
-//         : initialFormState[10000];
-
-//   let levels: array = [];
-
-//   if (await typeof(settings.severityLevels !== undefined)) {
-//     levels = settings.severityLevels;
-//   }
-//   return levels;
-// }
