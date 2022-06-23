@@ -158,8 +158,8 @@ const Config = () => {
       <Heading size="large">About</Heading>
       <Text>
         The Snyk Auto-Issues for Jira application subscribes to a Snyk organization's project scan results, automatically creating
-        Jira issues for <Strong>newly reported</Strong> vulnerabilities. Use the form below to configure the operation of this
-        Jira application.</Text>
+        Jira issues for <Strong>newly reported</Strong> vulnerabilities from <Link href="https://snyk.io/product/open-source-security-management/">Snyk Open Source</Link>.
+        Use the form below to configure the operation of this Jira application.</Text>
       <Heading size="medium">Before you begin</Heading>
       <Text>
         This Jira application functions by consuming a webhook from <Link href="https://snyk.io">Snyk</Link>.
