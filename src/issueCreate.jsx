@@ -7,7 +7,8 @@ import ForgeUI, {
   useProductContext,
   useState } from '@forge/ui';
 import api, {fetch, storage, startsWith, route} from '@forge/api';
-import * as md2adf from 'md-to-adf';
+// import * as md2adf from 'md-to-adf';
+import fnTranslate from 'md-to-adf'
 
 interface JiraIssue {
   update: {},
@@ -72,14 +73,15 @@ export const processSnykHookData = async(req) => {
     // Conveniently, this is the only event type that Snyk sends out right now.
     if (eventType == 'project_snapshot/v0') {
       // @TODO: Remove logging.
-      await console.log(`${snykProjectName} was tested`);
-      await console.log(`It's ID is: ${snykProjectId}`);
-      await console.log(`This project has ${dependencyCount} dependencies.`);
-      await console.log(`There are ${issueCountCritical} CRITICAL issues.`);
-      await console.log(`Wow! There are ${newIssueCount} new issues.`);
-      await console.log(`${removedIssueCount} issues were removed/remediated since the previous scan.`);
-      await console.log(`---------------------------------`)
-      await console.log('We should maybe create Jira issues for the issues Snyk reports...');
+      await console.log(`${snykProjectName} was tested. It's ID is ${snykProjectId}.\n
+----------------------`);
+      // await console.log(`It's ID is: ${snykProjectId}`);
+      // await console.log(`This project has ${dependencyCount} dependencies.`);
+      // await console.log(`There are ${issueCountCritical} CRITICAL issues.`);
+      // await console.log(`Wow! There are ${newIssueCount} new issues.`);
+      // await console.log(`${removedIssueCount} issues were removed/remediated since the previous scan.`);
+      // await console.log(`---------------------------------`)
+      // await console.log('We should maybe create Jira issues for the issues Snyk reports...');
 
 
       // ***********
@@ -246,7 +248,6 @@ const prepareNewIssue = ({snykProject, snykIssueId, snykIssueTitle, snykDescript
   console.log(`jiraIssueType - ${jiraIssueTypeId}`);
   console.log('==========================================');
 
-
   // Body data needs to return a _string_ of JSON.
   // The Jira V3 API supports Atlassian Document Format, so our source Markdown has to be converted.
   const bodyData = {
@@ -259,7 +260,7 @@ const prepareNewIssue = ({snykProject, snykIssueId, snykIssueTitle, snykDescript
       project: {
         id: jiraProjectId
       },
-      description: md2adf(snykDescription),
+      description: fnTranslate(snykDescription),
       labels: [
         'snyk',
         `snykSev-${snykSeverity}`,
@@ -283,8 +284,9 @@ const createJiraIssue = async({data} : {any}) => {
     },
     body: JSON.stringify(data)
   });
-  console.log(`Response: ${response.status} ${response.statusText}`);
   const result = await response.json();
+
+  console.log(`Response: ${response.status} ${response.statusText}`);
 
   return result;
 }

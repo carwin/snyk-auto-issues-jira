@@ -56,12 +56,9 @@ const projectIssueTypesToFormOptions = (rawTypes) => {
     rawTypes.map(type => {
       if (type.scope.project.id === context.platformContext.projectId) {
         type.subtask !== true ? options.push(<Option label={type.name} value={type.id} __auxId={`Option.${type.id}`} />) : false;
-        // type.subtask !== true ? options.push(<Option label={type.name} value={type.id} defaultSelected={optionSelectOnLoad(type.id)} />) : false;
-        // type.subtask !== true ? options.push({name: type.name, value: type.id}) : false;
       }
     })
   }
-  console.log('options', options);
   return options;
 }
 
