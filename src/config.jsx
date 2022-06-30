@@ -21,27 +21,21 @@ import ForgeUI, {
   TextArea,
   TextField,
 } from '@forge/ui';
-import api, {storage, route, webTrigger} from '@forge/api';
+import api, { storage, route, webTrigger } from '@forge/api';
 // import {webTrigger} from '@forge/api';
 
-interface AppSettings {
-  [jiraId: string]: {
-    severityLevels: string[],
-  }
-}
-
-const initialFormState: AppSettings = {
+const initialFormState = {
   '10000': {
     severityLevels: ['critical', 'high'],
-    mappedSnykProjects: [],
+    mappedSnykProjects: ['abcdefgh-ijkl-mnop-qrst-uvwxyz012345'],
     issueType: '',
   }
 };
 
-const getProjectIssueTypes = async() => {
+const getProjectIssueTypes = async () => {
   const response = await api
-        .asApp()
-        .requestJira(route`/rest/api/3/issuetype`);
+    .asApp()
+    .requestJira(route`/rest/api/3/issuetype`);
   const result = await response.json();
   const optionComponents = await projectIssueTypesToFormOptions(result);
   return optionComponents;
@@ -51,10 +45,12 @@ const projectIssueTypesToFormOptions = (rawTypes) => {
   const context = useProductContext();
   console.log(`Got ${rawTypes.length} raw types`);
   const options = [];
-
+  console.log('heres project id in context: ', context.platformContext.projectId);
   if (rawTypes.length > 0) {
     rawTypes.map(type => {
-      if (type.scope.project.id === context.platformContext.projectId) {
+      // Only present global issue types
+      if (!('scope' in type)) {
+        console.log('type without? scope: ', type);
         type.subtask !== true ? options.push(<Option label={type.name} value={type.id} __auxId={`Option.${type.id}`} />) : false;
       }
     })
@@ -71,7 +67,7 @@ const projectIssueTypesToFormOptions = (rawTypes) => {
 // @param     string | number   The Jira project ID to look up settings for.
 // @returns   object
 //
-const setInitialFormState: AppSettings = async(jiraProjectId: number | string) => {
+const setInitialFormState = async (jiraProjectId) => {
   const pkey = jiraProjectId.toString();
   let settings = await storage.get(`${pkey}`); // @TODO.
   if (typeof settings === 'undefined' || settings.length === 0) {
@@ -93,6 +89,7 @@ const setInitialFormState: AppSettings = async(jiraProjectId: number | string) =
 const Config = () => {
   const context = useProductContext();
   const [currentProjectId] = useState(context.platformContext.projectId);
+  console.log('Current project ID in platform context: ', currentProjectId);
   // const [formState, setFormState] = useState(storage.get('appSettings'));
   const [formState, setFormState] = useState(setInitialFormState(currentProjectId));
   const [snykWebhookInfoVisible, setSnykWebhookInfo] = useState(false);
@@ -101,11 +98,11 @@ const Config = () => {
   const query = useState(storage.query().getMany());
 
   // The onSubmit handler
-  const onConfigSubmit = async(formData) => {
-  // @TODO: List is below
-  // Validate that submitted SNYK project IDs are valid UUIDs.
-  // - Validate the content of that field on form submit.
-  // - Show an error of some kind, explaining the problem.
+  const onConfigSubmit = async (formData) => {
+    // @TODO: List is below
+    // Validate that submitted SNYK project IDs are valid UUIDs.
+    // - Validate the content of that field on form submit.
+    // - Show an error of some kind, explaining the problem.
     console.log('formData on submit... ', formData);
     console.log('formState on submit...', formState);
 
@@ -145,7 +142,7 @@ const Config = () => {
       "secret": "<YOUR-CUSTOM-TEXT>"
   }'`;
 
-  const [issueTypeOptions] = useState(async() => await getProjectIssueTypes());
+  const [issueTypeOptions] = useState(async () => await getProjectIssueTypes());
 
   // This extrapolates some of the repetitive code that decides whether or not checkboxes
   // should be filled when the form loads. The idea is that the settings should persist.
@@ -198,19 +195,19 @@ const Config = () => {
           If you wish to create Jira issues for more than one Snyk project, separate the unique Snyk project IDs using a comma <Code text="," language="bash" />.
         </Text>
         <TextArea placeholder="af137b96-6966-46c1-826b-2e79ac49bbd9"
-                  defaultValue={typeof(formState.mappedSnykProjects) !== 'undefined' && formState.mappedSnykProjects}
-                  isRequired="true"
-                  isMonospaced="true"
-                  name="mappedSnykProjects"
-                  label="Snyk Project ID(s)"
-                  description="Insert at least one Snyk Project ID from within your Snyk Organization. Newly discovered issues on that project will be created on this board." />
+          defaultValue={typeof (formState.mappedSnykProjects) !== 'undefined' && formState.mappedSnykProjects}
+          isRequired="true"
+          isMonospaced="true"
+          name="mappedSnykProjects"
+          label="Snyk Project ID(s)"
+          description="Insert at least one Snyk Project ID from within your Snyk Organization. Newly discovered issues on that project will be created on this board." />
 
         <Heading size="medium">Severity Level Options</Heading>
         <Text>
           The options below provide a mechanism for limiting the automated Jira issue creation by severity.
         </Text>
         <CheckboxGroup name="severityLevels"
-                       label="Select the severity levels for which Jira issues will be created.">
+          label="Select the severity levels for which Jira issues will be created.">
           <Checkbox value="critical" label="Critical" defaultChecked={boxCheckedOnLoad('critical')} />
           <Checkbox value="high" label="High" defaultChecked={boxCheckedOnLoad('high')} />
           <Checkbox value="medium" label="Medium" defaultChecked={boxCheckedOnLoad('medium')} />
@@ -237,7 +234,7 @@ const Config = () => {
           <Heading size="small">Registering a webhook with cURL</Heading>
           <Text>
             For convenience, this cURL request should take care of configuring a webhook for this application. <Strong>Be sure to
-            replace the sample values with your desired Snyk Organization ID and your API Token</Strong>.
+              replace the sample values with your desired Snyk Organization ID and your API Token</Strong>.
           </Text>
           <Code text={snykWebhookRegistrationCommand} language="bash" />
         </ModalDialog>
@@ -252,6 +249,6 @@ const Config = () => {
 // manifest, will call.
 export const run = render(
   <ProjectSettingsPage>
-    <Config/>
+    <Config />
   </ProjectSettingsPage>
 );
