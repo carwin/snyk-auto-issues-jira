@@ -43,14 +43,14 @@ const getProjectIssueTypes = async () => {
 
 const projectIssueTypesToFormOptions = (rawTypes) => {
   const context = useProductContext();
-  console.log(`Got ${rawTypes.length} raw types`);
   const options = [];
-  console.log('heres project id in context: ', context.platformContext.projectId);
   if (rawTypes.length > 0) {
     rawTypes.map(type => {
-      // Only present global issue types
-      if (!('scope' in type)) {
-        console.log('type without? scope: ', type);
+      // @TODO: It _might_ be possible for global issues to exist with no scope, in such a case the option list would be blank.
+      //        There is no way that I know of to trigger this behavior, but in theory it could happen.
+      //        If this is possible, I suspect it would manifest via the Jira instance creator's choice of "company managed" or
+      //        "team managed" during the Jira instance initialization.
+      if (type?.scope?.project?.id === context.platformContext.projectId) {
         type.subtask !== true ? options.push(<Option label={type.name} value={type.id} __auxId={`Option.${type.id}`} />) : false;
       }
     })
@@ -103,19 +103,18 @@ const Config = () => {
     // Validate that submitted SNYK project IDs are valid UUIDs.
     // - Validate the content of that field on form submit.
     // - Show an error of some kind, explaining the problem.
-    console.log('formData on submit... ', formData);
-    console.log('formState on submit...', formState);
 
     const mappedSnykProjectsArray: string[] = [];
     if (typeof formData.mappedSnykProjects !== 'undefined' && formData.mappedSnykProjects.includes(',')) {
       formData.mappedSnykProjects = formData.mappedSnykProjects.split(',').map(item => item.trim());
     }
 
-    console.log('--------------------------------------------------------------------------------')
-    await console.log("Here's what we have in storage when we begin submit: ", await storage.get(currentProjectId))
-    await storage.set(`${currentProjectId.toString()}`, formData);
-    await console.log("Here's what we have in storage when we end submit: ", await storage.get(currentProjectId))
-    console.log('--------------------------------------------------------------------------------')
+    // Uncomment the console logs below when debugging application state.
+    // console.log('--------------------------------------------------------------------------------')
+    // await console.log("Here's what we have in storage when we begin submit: ", await storage.get(currentProjectId))
+    // await storage.set(`${currentProjectId.toString()}`, formData);
+    // await console.log("Here's what we have in storage when we end submit: ", await storage.get(currentProjectId))
+    // console.log('--------------------------------------------------------------------------------')
     await storage.set(currentProjectId, formData);
     setFormState(formData);
   };
