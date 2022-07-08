@@ -33,9 +33,12 @@ const initialFormState = {
 };
 
 const getProjectIssueTypes = async () => {
+  const context = useProductContext();
+  const projectId = context.platformContext.projectId;
+
   const response = await api
     .asApp()
-    .requestJira(route`/rest/api/3/issuetype`);
+    .requestJira(route`/rest/api/3/issuetype/project?projectId=${projectId}`);
   const result = await response.json();
   const optionComponents = await projectIssueTypesToFormOptions(result);
   return optionComponents;
@@ -46,13 +49,7 @@ const projectIssueTypesToFormOptions = (rawTypes) => {
   const options = [];
   if (rawTypes.length > 0) {
     rawTypes.map(type => {
-      // @TODO: It _might_ be possible for global issues to exist with no scope, in such a case the option list would be blank.
-      //        There is no way that I know of to trigger this behavior, but in theory it could happen.
-      //        If this is possible, I suspect it would manifest via the Jira instance creator's choice of "company managed" or
-      //        "team managed" during the Jira instance initialization.
-      if (type?.scope?.project?.id === context.platformContext.projectId) {
-        type.subtask !== true ? options.push(<Option label={type.name} value={type.id} __auxId={`Option.${type.id}`} />) : false;
-      }
+      type.subtask !== true ? options.push(<Option label={type.name} value={type.id} __auxId={`Option.${type.id}`} />) : false;
     })
   }
   return options;
