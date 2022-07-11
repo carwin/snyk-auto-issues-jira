@@ -6,18 +6,17 @@ Users may configure the application on a per-project basis in their Jira environ
 
 See [developer.atlassian.com/platform/forge/](https://developer.atlassian.com/platform/forge) for documentation and tutorials explaining Forge.
 
-## Usage Requirements
+# Usage
 
-- You'll need a Jira cloud environment and permissions to install.
-- Configure the app from a project settings page in Jira.
-- Use the app-provided callback to set up a Snyk webhook.
+Visit [the documentation wiki](https://github.com/carwin/snyk-auto-issues-jira/wiki) for information about how to configure and use Snyk
+Auto-Issues for Jira.
 
-## Development
+# Contributing
 
-### System Requirements
+## System Requirements
 
-- NodeJS (LTS) 
-- @forge/cli 
+- NodeJS (LTS)
+- @forge/cli
 - Docker (optional)
 
 Installing `@forge/cli` globally is recommended.
@@ -26,12 +25,12 @@ Installing `@forge/cli` globally is recommended.
 the `.tool-versions` file at the root of the repository should ensure your setup
 is correct with minimal effort./
 
-### Prerequisites
+## Prerequisites
 
 - Access to an Atlassian Cloud developer site
 - An Atlassian API token
 
-Detailed information about the items in the list above can be found in the 
+Detailed information about the items in the list above can be found in the
 [Forge developer documentation](https://developer.atlassian.com/platform/forge/getting-started/).
 
 Before you can work with a Forge app in any meaningful way, you'll need to
@@ -45,7 +44,7 @@ forge login
 For further information, again refer to the Forge developer documentation linked
 above.
 
-### Installing and Running
+## Installing and Running
 
 1. Firstly, the project must be **deployed** to an environment. The
    separation/concept of /environments/ within the context of Atlassian Cloud and
@@ -66,18 +65,18 @@ above.
 2. Once deployed, the application must be installed. This can be accomplished
    via the administration interface within your Jira project, or via the CLI
    directly.
-   
+
    ```shell
-   $ forge install 
+   $ forge install
    ```
 
 3. (Optional) Once installed, you can forward requests to the application to
    your local machine which is very useful for debugging. Doing so also enables
    hot-reloading of the application, allowing you to make changes without
-   needing to constantly redeploy. 
-   
+   needing to constantly redeploy.
+
    This functionality requires Docker.
-   
+
    ```shell
    $ forge tunnel
    ```
@@ -88,7 +87,7 @@ above.
 
 5. When the settings have been configured you're ready to develop.
 
-### Handy Helpers
+## Handy Helpers
 
 If there are major changes you may be required to run the following command after deploying:
 
@@ -115,7 +114,7 @@ great if you're looking for something specific.
 When working in the _development_ environment with `forge tunnel`, the logs are
 streamed live to STDOUT, but for other environments, the best option is `forge
 logs`. With no arguments, the data returned can be difficult to parse and mostly
-appears to have no logical order. 
+appears to have no logical order.
 
 You can view logs grouped by invocation and filtered by environment from the
 last hour by :
@@ -123,5 +122,3 @@ last hour by :
 ``` shell
 $ forge logs -e production -g -s 1h
 ```
-
-`
